@@ -52,70 +52,70 @@ func NewGolangFuncHelper(name string, funcVar interface{}) (helper *GolangFuncHe
 type FnGetEmbeddingArg func(i int) interface{}
 
 func (h *GolangFuncHelper) CallGolangFunc(embeddingFuncArgsNum int, embddingFuncName string, getArg FnGetEmbeddingArg) (val interface{}, err error) {
-		argsNum := embeddingFuncArgsNum
-		fnType := h.fnType
+	argsNum := embeddingFuncArgsNum
+	fnType := h.fnType
 
-		variadic := fnType.IsVariadic()
-		lastNumIn := fnType.NumIn() - 1
-		if variadic {
-			if argsNum < lastNumIn {
-				err = fmt.Errorf("at least %d args to call %s", lastNumIn, embddingFuncName)
-				return
-			}
+	variadic := fnType.IsVariadic()
+	lastNumIn := fnType.NumIn() - 1
+	if variadic {
+		if argsNum < lastNumIn {
+			err = fmt.Errorf("at least %d args to call %s", lastNumIn, embddingFuncName)
+			return
+		}
+	} else {
+		if argsNum != fnType.NumIn() {
+			err = fmt.Errorf("%d args expected to call %s", argsNum, embddingFuncName)
+			return
+		}
+	}
+
+	// make golang func args
+	goArgs := make([]reflect.Value, argsNum)
+	var fnArgType reflect.Type
+	for i:=0; i<argsNum; i++ {
+		if i<lastNumIn || !variadic {
+			fnArgType = fnType.In(i)
 		} else {
-			if argsNum != fnType.NumIn() {
-				err = fmt.Errorf("%d args expected to call %s", argsNum, embddingFuncName)
-				return
-			}
+			fnArgType = fnType.In(lastNumIn).Elem()
 		}
 
-		// make golang func args
-		goArgs := make([]reflect.Value, argsNum)
-		var fnArgType reflect.Type
-		for i:=0; i<argsNum; i++ {
-			if i<lastNumIn || !variadic {
-				fnArgType = fnType.In(i)
-			} else {
-				fnArgType = fnType.In(lastNumIn).Elem()
-			}
+		goArgs[i] = MakeValue(fnArgType)
+		SetValue(goArgs[i], getArg(i))
+	}
 
-			goArgs[i] = MakeValue(fnArgType)
-			SetValue(goArgs[i], getArg(i))
+	// call golang func
+	res := h.fnVal.Call(goArgs)
+
+	// convert result to embedding
+	retc := len(res)
+	if retc == 0 {
+		val = nil
+		return
+	}
+	lastRetType := fnType.Out(retc-1)
+	if lastRetType.Name() == "error" {
+		e := res[retc-1].Interface()
+		if e != nil {
+			err = e.(error)
+			return
 		}
-
-		// call golang func
-		res := h.fnVal.Call(goArgs)
-
-		// convert result to embedding
-		retc := len(res)
+		retc -= 1
 		if retc == 0 {
 			val = nil
 			return
 		}
-		lastRetType := fnType.Out(retc-1)
-		if lastRetType.Name() == "error" {
-			e := res[retc-1].Interface()
-			if e != nil {
-				err = e.(error)
-				return
-			}
-			retc -= 1
-			if retc == 0 {
-				val = nil
-				return
-			}
-		}
+	}
 
-		if retc == 1 {
-			val = res[0].Interface()
-			return
-		}
-		retV := make([]interface{}, retc)
-		for i:=0; i<retc; i++ {
-			retV[i] = res[i].Interface()
-		}
-		val = retV
+	if retc == 1 {
+		val = res[0].Interface()
 		return
+	}
+	retV := make([]interface{}, retc)
+	for i:=0; i<retc; i++ {
+		retV[i] = res[i].Interface()
+	}
+	val = retV
+	return
 }
 
 func (h *GolangFuncHelper) GetRealName() string {
