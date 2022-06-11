@@ -1,3 +1,5 @@
 # utilities to embed a language for Golang application
 
-Some Golang libs make use of this package to embed a language. Please see [go-epy](https://github.com/rosbit/go-epy), [go-quickjs](https://github.com/rosbit/go-quickjs).
+This package is intended to provide some utilities to embed a language in Golang applications.
+Please see [go-epy](https://github.com/rosbit/go-epy), [go-quickjs](https://github.com/rosbit/go-quickjs),
+[go-wasm](https://github.com/rosbit/go-wasm), [go-elisp](https://github.com/rosbit/go-elisp).
