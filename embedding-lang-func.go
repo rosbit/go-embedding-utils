@@ -32,6 +32,15 @@ func (h *EmbeddingFuncHelper) BindEmbeddingFunc(goFunc FnGoFunc) {
 	h.dest.Set(reflect.MakeFunc(h.fnType, goFunc))
 }
 
+func (h *EmbeddingFuncHelper) NumOut() (nOut int, withLastErr bool) {
+	fnType := h.fnType
+	nOut = fnType.NumOut()
+	if nOut > 0 && fnType.Out(nOut-1).Name() == "error" {
+		withLastErr = true
+	}
+	return
+}
+
 func (h *EmbeddingFuncHelper) MakeGoFuncArgs(args []reflect.Value) (<-chan interface{}) {
 	fnType := h.fnType
 
@@ -106,8 +115,10 @@ func (h *EmbeddingFuncHelper) ToGolangResults(res interface{}, isResArray bool, 
 		nOut := fnType.NumOut()
 		if nOut > 0 && fnType.Out(nOut-1).Name() == "error" {
 			results[nOut-1] = reflect.ValueOf(err).Convert(fnType.Out(nOut-1))
+		/*
 		} else {
 			panic(err)
+		*/
 		}
 	}
 
