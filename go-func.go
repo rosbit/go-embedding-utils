@@ -3,21 +3,18 @@ package elutils
 import (
 	"reflect"
 	"fmt"
-	"runtime"
-	"strings"
 )
 
 type GolangFuncHelper struct {
 	fnVal reflect.Value
 	fnType reflect.Type
-	realName string
 }
 
-func NewGolangFuncHelperDiretly(fnVal reflect.Value, fnType reflect.Type) (helper *GolangFuncHelper) {
+func NewGolangFuncHelperDirectly(fnVal reflect.Value, fnType reflect.Type) (helper *GolangFuncHelper) {
 	return &GolangFuncHelper{fnVal:fnVal, fnType:fnType}
 }
 
-func NewGolangFuncHelper(name string, funcVar interface{}) (helper *GolangFuncHelper, err error) {
+func NewGolangFuncHelper(funcVar interface{}) (helper *GolangFuncHelper, err error) {
 	if funcVar == nil {
 		err = fmt.Errorf("funcVar must be a non-nil value")
 		return
@@ -28,23 +25,9 @@ func NewGolangFuncHelper(name string, funcVar interface{}) (helper *GolangFuncHe
 		return
 	}
 
-	if len(name) == 0 {
-		n := runtime.FuncForPC(reflect.ValueOf(funcVar).Pointer()).Name()
-		if pos := strings.LastIndex(n, "."); pos >= 0 {
-			name = n[pos+1:]
-		} else {
-			name = n
-		}
-
-		if len(name) == 0 {
-			name = "noname"
-		}
-	}
-
 	helper = &GolangFuncHelper{
 		fnVal: reflect.ValueOf(funcVar),
 		fnType: t,
-		realName: name,
 	}
 	return
 }
@@ -116,9 +99,5 @@ func (h *GolangFuncHelper) CallGolangFunc(embeddingFuncArgsNum int, embddingFunc
 	}
 	val = retV
 	return
-}
-
-func (h *GolangFuncHelper) GetRealName() string {
-	return h.realName
 }
 
