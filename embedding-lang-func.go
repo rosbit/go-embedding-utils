@@ -6,6 +6,7 @@ import (
 )
 
 type FnGoFunc func(args []reflect.Value)(results []reflect.Value)
+type FnBindGoFunc func(fnVarPtr interface{})FnGoFunc
 
 type EmbeddingFuncHelper struct {
 	dest reflect.Value

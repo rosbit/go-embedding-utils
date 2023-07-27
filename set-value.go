@@ -14,12 +14,21 @@ func SetValue(dest reflect.Value, val interface{}) error {
 		}
 		return nil
 	}
-	if dt.Kind() == reflect.Ptr {
+	switch dt.Kind() {
+	case reflect.Ptr:
 		et := dt.Elem()
 		ev := MakeValue(et)
 		SetValue(ev, val)
 		dest.Set(ev.Addr())
 		return nil
+	case reflect.Func:
+		if bindGoFunc, ok := val.(FnBindGoFunc); ok {
+			if dest.CanAddr() {
+				fn := reflect.New(dt)
+				dest.Set(reflect.MakeFunc(dt, bindGoFunc(fn.Interface())))
+				return nil
+			}
+		}
 	}
 	v := reflect.ValueOf(val)
 	vt := reflect.TypeOf(val)
