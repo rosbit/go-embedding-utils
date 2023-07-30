@@ -18,9 +18,10 @@ func SetValue(dest reflect.Value, val interface{}) error {
 	case reflect.Ptr:
 		et := dt.Elem()
 		ev := MakeValue(et)
-		SetValue(ev, val)
-		dest.Set(ev.Addr())
-		return nil
+		if err := SetValue(ev, val); err == nil {
+			dest.Set(ev.Addr())
+			return nil
+		}
 	case reflect.Func:
 		if bindGoFunc, ok := val.(FnBindGoFunc); ok {
 			if dest.CanAddr() {
